@@ -1,0 +1,102 @@
+name: Build Desktop App (MSI)
+
+# Este workflow é acionado APENAS pela API do MetaBuilder PRO
+on:
+  repository_dispatch:
+    types: [build-desktop-app]
+
+jobs:
+  build-and-upload:
+    runs-on: windows-latest
+    
+    steps:
+      - name: Checkout Template Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: x86_64-pc-windows-msvc
+
+      - name: Cache Cargo and Node Modules
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            src-tauri/target
+            node_modules
+          key: ${{ runner.os }}-tauri-build-${{ hashFiles('**/Cargo.lock') }}-${{ hashFiles('package-lock.json') }}
+
+      - name: Install Frontend Dependencies
+        run: npm install
+
+      # =======================================================
+      # (Opcional) Aqui você pode ler o `github.event.client_payload`
+      # para injetar variáveis de ambiente, ícones ou conexões
+      # Exemplo:
+      # - run: echo "BUILD_ID=${{ github.event.client_payload.buildId }}" >> $env:GITHUB_ENV
+      # =======================================================
+
+      - name: Build Tauri App (MSI)
+        run: npm run tauri build
+
+      - name: Upload MSI to Supabase Storage
+        id: upload
+        shell: pwsh
+        env:
+          SUPABASE_URL: "https://SEU_PROJETO.supabase.co" # Substitua pela sua URL
+          SUPABASE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          BUILD_ID: ${{ github.event.client_payload.buildId }}
+        run: |
+          # 1. Localiza o arquivo MSI gerado
+          $MsiPath = Get-ChildItem -Path "src-tauri/target/release/bundle/msi/*.msi" | Select-Object -First 1
+          if (-not $MsiPath) { throw "MSI não encontrado!" }
+          
+          # 2. Define o nome no bucket usando o ID do build para evitar colisão
+          $FileName = "desktop-builds/${env:BUILD_ID}/" + $MsiPath.Name
+          
+          # 3. Faz o Upload via REST API do Supabase Storage
+          $Uri = "${env:SUPABASE_URL}/storage/v1/object/releases/$FileName"
+          
+          $Response = Invoke-RestMethod -Uri $Uri -Method Post -Headers @{
+            "Authorization" = "Bearer ${env:SUPABASE_KEY}"
+          } -InFile $MsiPath.FullName -ContentType "application/octet-stream"
+          
+          # 4. Retorna a URL pública gerada
+          $DownloadUrl = "${env:SUPABASE_URL}/storage/v1/object/public/releases/$FileName"
+          echo "DOWNLOAD_URL=$DownloadUrl" >> $env:GITHUB_ENV
+          Write-Output "Upload concluído: $DownloadUrl"
+
+      - name: Call Webhook API (Success)
+        if: success()
+        shell: pwsh
+        run: |
+          $WebhookUrl = "https://SEU_SITE_METABUILDER.com/api/build-desktop-webhook" # Substitua pela URL da sua Vercel
+          
+          $Body = @{
+            buildId = "${{ github.event.client_payload.buildId }}"
+            status = "success"
+            downloadUrl = $env:DOWNLOAD_URL
+          } | ConvertTo-Json
+          
+          Invoke-RestMethod -Uri $WebhookUrl -Method Post -Body $Body -ContentType "application/json"
+
+      - name: Call Webhook API (Failure)
+        if: failure()
+        shell: pwsh
+        run: |
+          $WebhookUrl = "https://SEU_SITE_METABUILDER.com/api/build-desktop-webhook" # Substitua pela URL da sua Vercel
+          
+          $Body = @{
+            buildId = "${{ github.event.client_payload.buildId }}"
+            status = "error"
+            errorMsg = "Falha durante o build no Github Actions."
+          } | ConvertTo-Json
+          
+          Invoke-RestMethod -Uri $WebhookUrl -Method Post -Body $Body -ContentType "application/json"
