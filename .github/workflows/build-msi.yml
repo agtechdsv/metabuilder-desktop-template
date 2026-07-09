@@ -36,12 +36,18 @@ jobs:
       - name: Install Frontend Dependencies
         run: npm install
 
-      # =======================================================
-      # (Opcional) Aqui você pode ler o `github.event.client_payload`
-      # para injetar variáveis de ambiente, ícones ou conexões
-      # Exemplo:
-      # - run: echo "BUILD_ID=${{ github.event.client_payload.buildId }}" >> $env:GITHUB_ENV
-      # =======================================================
+      - name: Customize App Identifier
+        shell: pwsh
+        run: |
+          $AppName = "${{ github.event.client_payload.appName }}"
+          # Remove caracteres especiais e gera um subdomínio válido
+          $CleanName = $AppName -replace '[^a-zA-Z0-9]', ''
+          if (-not $CleanName) { $CleanName = "app" }
+          $NewId = "com.metabuilder.$CleanName".ToLower()
+          
+          # Altera no arquivo de configuração do Tauri antes do Build
+          (Get-Content src-tauri/tauri.conf.json) -replace '"com.tauri.dev"', ('"' + $NewId + '"') | Set-Content src-tauri/tauri.conf.json
+          Write-Output "Novo identificador configurado: $NewId"
 
       - name: Build Tauri App (MSI)
         run: npx tauri build
