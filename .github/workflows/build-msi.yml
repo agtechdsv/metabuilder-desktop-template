@@ -50,7 +50,7 @@ jobs:
         id: upload
         shell: pwsh
         env:
-          SUPABASE_URL: "https://SEU_PROJETO.supabase.co" # Substitua pela sua URL
+          SUPABASE_URL: "https://chmstvtepzmjhpyxjjam.supabase.co" # Substitua pela sua URL
           SUPABASE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
           BUILD_ID: ${{ github.event.client_payload.buildId }}
         run: |
@@ -77,7 +77,7 @@ jobs:
         if: success()
         shell: pwsh
         run: |
-          $WebhookUrl = "https://SEU_SITE_METABUILDER.com/api/build-desktop-webhook" # Substitua pela URL da sua Vercel
+          $WebhookUrl = "https://metabuilderpro.com/api/build-desktop-webhook" # Substitua pela URL da sua Vercel
           
           $Body = @{
             buildId = "${{ github.event.client_payload.buildId }}"
@@ -91,7 +91,7 @@ jobs:
         if: failure()
         shell: pwsh
         run: |
-          $WebhookUrl = "https://SEU_SITE_METABUILDER.com/api/build-desktop-webhook" # Substitua pela URL da sua Vercel
+          $WebhookUrl = "https://metabuilderpro.com/api/build-desktop-webhook" # Substitua pela URL da sua Vercel
           
           $Body = @{
             buildId = "${{ github.event.client_payload.buildId }}"
