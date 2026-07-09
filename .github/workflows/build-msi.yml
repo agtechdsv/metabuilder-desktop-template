@@ -36,7 +36,7 @@ jobs:
       - name: Install Frontend Dependencies
         run: npm install
 
-      - name: Customize App Identifier
+      - name: Customize App Metadata (White-Label)
         shell: pwsh
         run: |
           $AppName = "${{ github.event.client_payload.appName }}"
@@ -45,12 +45,22 @@ jobs:
           if (-not $CleanName) { $CleanName = "app" }
           $NewId = "com.metabuilder.$CleanName".ToLower()
           
-          # Altera no arquivo de configuração do Tauri antes do Build
-          (Get-Content src-tauri/tauri.conf.json) -replace '"com.tauri.dev"', ('"' + $NewId + '"') | Set-Content src-tauri/tauri.conf.json
+          # Altera as configurações do Tauri no tauri.conf.json antes do Build
+          $ConfPath = "src-tauri/tauri.conf.json"
+          (Get-Content $ConfPath) `
+            -replace '"com.tauri.dev"', ('"' + $NewId + '"') `
+            -replace '"MetaBuilder Template"', ('"' + $AppName + '"') `
+            -replace '"MetaBuilder App"', ('"' + $AppName + '"') `
+            | Set-Content $ConfPath
+            
           Write-Output "Novo identificador configurado: $NewId"
+          Write-Output "Novo nome de exibição: $AppName"
 
       - name: Build Tauri App (MSI)
         run: npx tauri build
+        env:
+          NEXT_PUBLIC_TUNNEL_URL: ${{ github.event.client_payload.tunnelUrl }}
+          NEXT_PUBLIC_APP_NAME: ${{ github.event.client_payload.appName }}
 
       - name: Upload MSI to Supabase Storage
         id: upload
