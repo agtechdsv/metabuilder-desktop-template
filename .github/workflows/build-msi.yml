@@ -56,6 +56,28 @@ jobs:
           Write-Output "Novo identificador configurado: $NewId"
           Write-Output "Novo nome de exibição: $AppName"
 
+          # Processa o ícone se o usuário tiver feito upload
+          $IconBase64 = "${{ github.event.client_payload.iconBase64 }}"
+          if ($IconBase64 -and $IconBase64 -ne "null" -and $IconBase64.Trim() -ne "") {
+            Write-Output "Decodificando ícone personalizado..."
+            # Remove o cabeçalho base64 se presente
+            if ($IconBase64.Contains("base64,")) {
+              $IconBase64 = $IconBase64.Substring($IconBase64.IndexOf("base64,") + 7)
+            }
+            try {
+              $Bytes = [Convert]::FromBase64String($IconBase64)
+              [IO.File]::WriteAllBytes("src-tauri/custom-icon.png", $Bytes)
+              
+              Write-Output "Executando tauri icon para gerar formatos .ico, .icns e pngs..."
+              npx tauri icon src-tauri/custom-icon.png
+              Write-Output "Ícones gerados com sucesso."
+            } catch {
+              Write-Error "Falha ao decodificar ou gerar ícone: $_"
+            }
+          } else {
+            Write-Output "Nenhum ícone personalizado fornecido. Usando ícone padrão do MetaBuilder PRO."
+          }
+
       - name: Build Tauri App (MSI)
         run: npx tauri build
         env:
