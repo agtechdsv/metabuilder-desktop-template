@@ -85,10 +85,15 @@ jobs:
         run: |
           $WebhookUrl = "https://metabuilderpro.com/api/build-desktop-webhook" # Substitua pela URL da sua Vercel
           
+          # 1. Localiza o arquivo MSI gerado para pegar as propriedades
+          $MsiPath = Get-ChildItem -Path "src-tauri/target/release/bundle/msi/*.msi" | Select-Object -First 1
+          $SizeBytes = if ($MsiPath) { $MsiPath.Length } else { 0 }
+          
           $Body = @{
             buildId = "${{ github.event.client_payload.buildId }}"
             status = "success"
             downloadUrl = $env:DOWNLOAD_URL
+            sizeBytes = $SizeBytes
           } | ConvertTo-Json
           
           Invoke-RestMethod -Uri $WebhookUrl -Method Post -Body $Body -ContentType "application/json"
