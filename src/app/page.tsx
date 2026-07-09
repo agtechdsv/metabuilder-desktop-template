@@ -3,31 +3,17 @@
 import { useEffect, useState } from 'react'
 
 export default function Home() {
-  const [tunnelUrl, setTunnelUrl] = useState<string | null>(null)
   const [isMounted, setIsMounted] = useState(false)
 
   useEffect(() => {
     setIsMounted(true)
     const envUrl = process.env.NEXT_PUBLIC_TUNNEL_URL
     if (envUrl) {
-      setTunnelUrl(envUrl)
+      window.location.href = envUrl
     }
   }, [])
 
   if (!isMounted) return null
-
-  if (tunnelUrl) {
-    return (
-      <main className="w-screen h-screen overflow-hidden bg-black">
-        <iframe
-          src={tunnelUrl}
-          className="w-full h-full border-0"
-          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-          allowFullScreen
-        />
-      </main>
-    )
-  }
 
   return (
     <main className="flex min-h-screen flex-col items-center justify-center bg-zinc-50 dark:bg-zinc-950 p-6 text-center">
