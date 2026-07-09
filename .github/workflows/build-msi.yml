@@ -44,7 +44,7 @@ jobs:
       # =======================================================
 
       - name: Build Tauri App (MSI)
-        run: run: npx tauri build
+        run: npx tauri build
 
       - name: Upload MSI to Supabase Storage
         id: upload
