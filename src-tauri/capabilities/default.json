@@ -6,6 +6,51 @@
     "main"
   ],
   "permissions": [
-    "core:default"
+    "core:default",
+    {
+      "identifier": "shell:allow-spawn",
+      "allow": [
+        {
+          "name": "npm-run-dev",
+          "cmd": "npm",
+          "args": ["run", "dev"]
+        },
+        {
+          "name": "cmd-npm-run-dev",
+          "cmd": "cmd",
+          "args": ["/c", "npm", "run", "dev"]
+        }
+      ]
+    },
+    {
+      "identifier": "shell:allow-execute",
+      "allow": [
+        {
+          "name": "npm",
+          "cmd": "npm",
+          "args": ["install"]
+        },
+        {
+          "name": "npm-run-dev",
+          "cmd": "npm",
+          "args": ["run", "dev"]
+        },
+        {
+          "name": "code",
+          "cmd": "code",
+          "args": ["."]
+        },
+        {
+          "name": "cmd",
+          "cmd": "cmd",
+          "args": ["/c", "npm", "install"]
+        },
+        {
+          "name": "cmd-npm-run-dev",
+          "cmd": "cmd",
+          "args": ["/c", "npm", "run", "dev"]
+        }
+      ]
+    }
   ]
 }
