@@ -3,7 +3,8 @@
   "identifier": "default",
   "description": "enables the default permissions",
   "windows": [
-    "main"
+    "main",
+    "splashscreen"
   ],
   "permissions": [
     "core:default",
@@ -14,27 +15,43 @@
         {
           "name": "npm",
           "cmd": "npm",
-          "args": ["install"]
+          "args": [
+            "install"
+          ]
         },
         {
           "name": "npm-run-dev",
           "cmd": "npm",
-          "args": ["run", "dev"]
+          "args": [
+            "run",
+            "dev"
+          ]
         },
         {
           "name": "code",
           "cmd": "code",
-          "args": ["."]
+          "args": [
+            "."
+          ]
         },
         {
           "name": "cmd",
           "cmd": "cmd",
-          "args": ["/c", "npm", "install"]
+          "args": [
+            "/c",
+            "npm",
+            "install"
+          ]
         },
         {
           "name": "cmd-npm-run-dev",
           "cmd": "cmd",
-          "args": ["/c", "npm", "run", "dev"]
+          "args": [
+            "/c",
+            "npm",
+            "run",
+            "dev"
+          ]
         }
       ]
     }

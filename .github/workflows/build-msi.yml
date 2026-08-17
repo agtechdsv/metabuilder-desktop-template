@@ -40,6 +40,9 @@ jobs:
         shell: pwsh
         run: |
           $AppName = "${{ github.event.client_payload.appName }}"
+          $Version = "${{ github.event.client_payload.version }}"
+          if (-not $Version -or $Version.Trim() -eq "") { $Version = "1.0.0" }
+          
           # Remove caracteres especiais e gera um subdomínio válido
           $CleanName = $AppName -replace '[^a-zA-Z0-9]', ''
           if (-not $CleanName) { $CleanName = "app" }
@@ -51,10 +54,21 @@ jobs:
             -replace '"com.tauri.dev"', ('"' + $NewId + '"') `
             -replace '"MetaBuilder Template"', ('"' + $AppName + '"') `
             -replace '"MetaBuilder App"', ('"' + $AppName + '"') `
+            -replace '"0.1.0"', ('"' + $Version + '"') `
             | Set-Content $ConfPath
             
           Write-Output "Novo identificador configurado: $NewId"
           Write-Output "Novo nome de exibição: $AppName"
+          Write-Output "Versão configurada: $Version"
+
+          # Atualiza splash.html com nome e versão
+          $SplashPath = "src-tauri/splash.html"
+          if (Test-Path $SplashPath) {
+            (Get-Content $SplashPath) `
+              -replace '<span id="app-name">App</span>', ('<span id="app-name">' + $AppName + '</span>') `
+              -replace '<span id="version">v1.0.0</span>', ('<span id="version">v' + $Version + '</span>') `
+              | Set-Content $SplashPath
+          }
 
           # Processa o ícone se o usuário tiver feito upload
           $IconUrl = "${{ github.event.client_payload.iconUrl }}"
@@ -63,6 +77,17 @@ jobs:
             try {
               Invoke-WebRequest -Uri $IconUrl -OutFile src-tauri/custom-icon.png
               
+              # Embutir imagem do ícone no splash.html
+              $IconBytes = [System.IO.File]::ReadAllBytes("src-tauri/custom-icon.png")
+              $IconB64 = [System.Convert]::ToBase64String($IconBytes)
+              $ImgTag = '<img src="data:image/png;base64,' + $IconB64 + '" alt="Icon" />'
+              if (Test-Path $SplashPath) {
+                (Get-Content $SplashPath) `
+                  -replace '<!-- ICON_PLACEHOLDER -->[\s\S]*?</svg>', ('<!-- ICON_PLACEHOLDER -->' + $ImgTag) `
+                  | Set-Content $SplashPath
+                Write-Output "Ícone embutido no splash.html com sucesso."
+              }
+
               Write-Output "Executando tauri icon para gerar formatos .ico, .icns e pngs..."
               npx tauri icon src-tauri/custom-icon.png
               Write-Output "Ícones gerados com sucesso."
@@ -70,7 +95,7 @@ jobs:
               Write-Error "Falha ao baixar ou gerar ícone: $_"
             }
           } else {
-            Write-Output "Nenhum ícone personalizado fornecido. Usando ícone padrão do MetaBuilder PRO."
+            Write-Output "Nenhum ícone personalizado fornecido. Usando ícone padrão."
           }
 
       - name: Build Tauri App (MSI)
