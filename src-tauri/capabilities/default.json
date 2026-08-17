@@ -6,6 +6,15 @@
     "main",
     "splashscreen"
   ],
+  "remote": {
+    "urls": [
+      "https://*.metabuilderpro.com",
+      "https://*.metabuilderpro.com/*",
+      "https://metabuilderpro.com",
+      "https://metabuilderpro.com/*",
+      "https://metabuilderpro.com/**"
+    ]
+  },
   "permissions": [
     "core:default",
     "core:app:default",
