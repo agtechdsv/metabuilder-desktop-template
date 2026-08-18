@@ -20,6 +20,7 @@
     "core:app:default",
     "core:app:allow-version",
     "shell:allow-spawn",
+    "shell:allow-open",
     {
       "identifier": "shell:allow-execute",
       "allow": [
