@@ -99,7 +99,12 @@ jobs:
           }
 
       - name: Build Tauri App (MSI)
-        run: npx tauri build
+        shell: pwsh
+        run: |
+          if (Test-Path "src-tauri/target/release/bundle/msi") {
+            Remove-Item -Path "src-tauri/target/release/bundle/msi\*" -Recurse -Force
+          }
+          npx tauri build
         env:
           NEXT_PUBLIC_TUNNEL_URL: ${{ github.event.client_payload.tunnelUrl }}
           NEXT_PUBLIC_APP_NAME: ${{ github.event.client_payload.appName }}
